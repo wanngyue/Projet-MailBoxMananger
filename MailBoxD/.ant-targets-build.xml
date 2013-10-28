@@ -1,0 +1,11 @@
+A
+build
+build-client
+build-ejb
+build-entity
+build-jar
+build-server
+clean
+deploy
+runjavaclient
+undeploy

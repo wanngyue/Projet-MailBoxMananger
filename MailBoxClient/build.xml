@@ -1,0 +1,62 @@
+<project name="MailBoxClient" default="all" basedir=".">
+    <description>
+        A simple build script.
+    </description>
+  <!-- set global properties for this build -->
+  <!-- set glassfish.home to point to glassfish installation  -->  
+  <property environment="env"/>
+  <property name="glassfish.home" value="${env.GLASSFISH_HOME}"/>
+	<property name="deployjar" value="MailBoxManager.jar"/>
+
+  <property name="build" value="build"/>
+
+ <target name="clean" description="clean up" >
+    <delete file="${deployjar}"/>
+    <delete dir="${build}"/>
+  </target>
+	
+  <target name="init">
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="all">
+    <antcall target="clean"/>
+    <antcall target="build"/>
+  </target>
+
+  <target name="build" description="build" depends="init">
+    <antcall target="build-server"/>
+	<antcall target="build-ejb"/>
+    <antcall target="build-client"/>
+  </target>
+
+  <target name="build-server">
+    <javac classpath="${glassfish.home}/lib/javaee.jar" 
+           srcdir="src/server"
+           destdir="${build}"/>
+  </target>
+  <target name="build-ejb">
+    <javac classpath="${glassfish.home}/lib/javaee.jar" 
+           srcdir="src/ejb"
+           destdir="${build}"/>
+  </target>
+
+  <target name="build-client">
+    <javac classpath="${glassfish.home}/lib/javaee.jar" 
+           srcdir="src/client"
+           destdir="${build}"
+           includes="JavaClient.java"/>
+  </target>
+  
+  
+	<target name="client">
+		<java  fork="on" 
+            failonerror="true"
+            classpath="${glassfish.home}/lib/javaee.jar:${glassfish.home}/lib/gf-client.jar:${build}/"
+            classname="client.JavaClient">
+		</java>
+	</target>
+
+ 
+
+</project>

@@ -1,0 +1,78 @@
+package ejb;
+import java.util.List;
+
+import javax.persistence.*;
+import javax.ejb.Stateful;
+import javax.ejb.Stateless;
+import javax.jws.WebMethod;
+import javax.jws.WebService;
+
+import server.MailBoxManagerBean;
+import server.MailBoxManagerBeanService;
+import entity.FinalUser;
+
+@Stateless
+@WebService
+public class DirectoryManagerBean implements DirectoryManager {
+
+	@PersistenceContext(unitName="pu1")
+	private EntityManager em;
+	@WebMethod
+	public void addUser(String pseudo, int newsGroupRight) {
+		int mailBoxId = 1;
+		FinalUser user=getFinalUser(pseudo);
+		if(user==null){
+			user = new FinalUser(pseudo, newsGroupRight);
+			MailBoxManagerBean mbm=new MailBoxManagerBeanService().getMailBoxManagerBeanPort();
+			mbm.addUserMailBox(pseudo);
+			em.persist(user);
+			em.flush();
+		}
+	}
+	@WebMethod
+	public void removeUser(String pseudo) {
+		MailBoxManagerBean mbm=new MailBoxManagerBeanService().getMailBoxManagerBeanPort();
+		FinalUser user = this.getFinalUser(pseudo);
+		mbm.removeUserMailBox(pseudo);
+		FinalUser user0 = em.merge(user);
+		em.remove(user0);
+	}
+
+	public void updateUserRights(String pseudo, int newsGroupRight) {
+		FinalUser user = this.getFinalUser(pseudo);
+		user.setNewsGroupRight(newsGroupRight);
+		em.persist(user);
+		em.flush();
+	}
+
+	public String listUsers() {
+		String chaine = "LISTE DES UTILISATEURS\n";
+		Query query = em.createQuery("select u from FinalUser u");
+		List<FinalUser> users = query.getResultList();
+		if(users.size() == 0)
+			chaine += "=> Aucun utilisateur\n";
+		else {
+			for (Object user : users) {
+				chaine += user.toString() + "\n";
+			}
+		}
+		return chaine;
+	}
+	@WebMethod
+	public int lookupUserRights(String pseudo) {
+		FinalUser user=getFinalUser(pseudo);
+		return user.getNewsGroupRight();
+
+	}
+	///////////
+	@WebMethod
+	public FinalUser getFinalUser(String userName){
+		Query q = em.createQuery("select u from FinalUser u where u.pseudo = :pseudo");
+		q.setParameter("pseudo", userName);
+		try{
+			return (FinalUser) q.getSingleResult();
+		}catch(Exception e){
+			return null;
+		}
+	}
+}
